@@ -138,11 +138,13 @@ type ServiceProvider struct {
 	BodyHash          bool
 	IgnoreTimestamp   bool
 
+	Realm string
+
 	// Enables non spec-compliant behavior:
 	// Allow parameters to be passed in the query string rather
 	// than the body.
 	// See https://github.com/mrjones/oauth/pull/63
-	SignQueryParams   bool
+	SignQueryParams bool
 }
 
 func (sp *ServiceProvider) httpMethod() string {
@@ -918,6 +920,9 @@ func (rt *RoundTripper) RoundTrip(userRequest *http.Request) (*http.Response, er
 
 	// Set auth header.
 	oauthHdr := OAUTH_HEADER
+	if rt.consumer.serviceProvider.Realm != "" {
+		oauthHdr += "realm=\"" + rt.consumer.serviceProvider.Realm + "\","
+	}
 	for pos, key := range authParams.Keys() {
 		for innerPos, value := range authParams.Get(key) {
 			if pos+innerPos > 0 {
@@ -1274,6 +1279,10 @@ func (c *Consumer) httpExecute(
 	// Set auth header.
 	req.Header = http.Header{}
 	oauthHdr := "OAuth "
+
+	if c.serviceProvider.Realm != "" {
+		oauthHdr += "realm=\"" + c.serviceProvider.Realm + "\""
+	}
 	for pos, key := range oauthParams.Keys() {
 		for innerPos, value := range oauthParams.Get(key) {
 			if pos+innerPos > 0 {
